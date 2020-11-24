@@ -3,7 +3,6 @@
 
 import platform
 
-import selectors  # noqa: F401  # lgtm [py/unused-import]
 
 try:
     import ssl
