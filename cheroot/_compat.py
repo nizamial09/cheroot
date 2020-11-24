@@ -11,7 +11,6 @@ try:
 except ImportError:
     IS_ABOVE_OPENSSL10 = None
 
-from contextlib import suppress  # noqa: F401
 
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
