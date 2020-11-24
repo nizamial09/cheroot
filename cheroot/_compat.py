@@ -57,9 +57,6 @@ def assert_native(n):
         raise TypeError('n must be a native str (got %s)' % type(n).__name__)
 
 
-memoryview = memoryview
-
-
 def extract_bytes(mv):
     r"""Retrieve bytes out of the given input buffer.
 
