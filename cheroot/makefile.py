@@ -1,21 +1,12 @@
 """Socket file object."""
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
 import socket
 
-try:
-    # prefer slower Python-based io module
-    import _pyio as io
-except ImportError:
-    # Python 2.6
-    import io
-
-import six
+# prefer slower Python-based io module
+import _pyio as io
 
 from . import errors
-from ._compat import extract_bytes, memoryview
+from ._compat import extract_bytes
 
 
 # Write only 16K at a time to sockets
@@ -115,9 +106,7 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
         def _reuse(self):
             pass
 
-    _fileobject_uses_str_type = six.PY2 and isinstance(
-        socket._fileobject(FauxSocket())._rbuf, six.string_types,
-    )
+    _fileobject_uses_str_type = False
 
     # FauxSocket is no longer needed
     del FauxSocket
@@ -406,42 +395,41 @@ class MakeFile_PY2(getattr(socket, '_fileobject', object)):
             return bool(self._rbuf)
 
 
-if not six.PY2:
-    class StreamReader(io.BufferedReader):
-        """Socket stream reader."""
+class StreamReader(io.BufferedReader):
+    """Socket stream reader."""
 
-        def __init__(self, sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
-            """Initialize socket stream reader."""
-            super().__init__(socket.SocketIO(sock, mode), bufsize)
-            self.bytes_read = 0
+    def __init__(self, sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
+        """Initialize socket stream reader."""
+        super().__init__(socket.SocketIO(sock, mode), bufsize)
+        self.bytes_read = 0
 
-        def read(self, *args, **kwargs):
-            """Capture bytes read."""
-            val = super().read(*args, **kwargs)
-            self.bytes_read += len(val)
-            return val
+    def read(self, *args, **kwargs):
+        """Capture bytes read."""
+        val = super().read(*args, **kwargs)
+        self.bytes_read += len(val)
+        return val
 
-        def has_data(self):
-            """Return true if there is buffered data to read."""
-            return len(self._read_buf) > self._read_pos
+    def has_data(self):
+        """Return true if there is buffered data to read."""
+        return len(self._read_buf) > self._read_pos
 
-    class StreamWriter(BufferedWriter):
-        """Socket stream writer."""
 
-        def __init__(self, sock, mode='w', bufsize=io.DEFAULT_BUFFER_SIZE):
-            """Initialize socket stream writer."""
-            super().__init__(socket.SocketIO(sock, mode), bufsize)
-            self.bytes_written = 0
+class StreamWriter(BufferedWriter):
+    """Socket stream writer."""
 
-        def write(self, val, *args, **kwargs):
-            """Capture bytes written."""
-            res = super().write(val, *args, **kwargs)
-            self.bytes_written += len(val)
-            return res
+    def __init__(self, sock, mode='w', bufsize=io.DEFAULT_BUFFER_SIZE):
+        """Initialize socket stream writer."""
+        super().__init__(socket.SocketIO(sock, mode), bufsize)
+        self.bytes_written = 0
 
-    def MakeFile(sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
-        """File object attached to a socket object."""
-        cls = StreamReader if 'r' in mode else StreamWriter
-        return cls(sock, mode, bufsize)
-else:
-    StreamReader = StreamWriter = MakeFile = MakeFile_PY2
+    def write(self, val, *args, **kwargs):
+        """Capture bytes written."""
+        res = super().write(val, *args, **kwargs)
+        self.bytes_written += len(val)
+        return res
+
+
+def MakeFile(sock, mode='r', bufsize=io.DEFAULT_BUFFER_SIZE):
+    """File object attached to a socket object."""
+    cls = StreamReader if 'r' in mode else StreamWriter
+    return cls(sock, mode, bufsize)
