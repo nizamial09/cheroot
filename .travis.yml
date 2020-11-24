@@ -39,10 +39,6 @@ jobs:
   - env: TOXENV=pre-commit-failing
   - python: nightly
   include:
-  - python: pypy
-    env:
-      PYTEST_ADDOPTS: >-
-        '-p no:warnings'
   - <<: *lint_python_base
     name: pre-commit.com tool linters
     env: TOXENV=pre-commit
