@@ -1,9 +1,4 @@
 """Tests for the HTTP server."""
-# -*- coding: utf-8 -*-
-# vim: set fileencoding=utf-8 :
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
 from contextlib import closing
 import os
@@ -11,13 +6,11 @@ import socket
 import tempfile
 import threading
 import uuid
+import urllib.parse
 
 import pytest
 import requests
 import requests_unixsocket
-import six
-
-from six.moves import urllib
 
 from .._compat import bton, ntob
 from .._compat import IS_LINUX, IS_MACOS, IS_WINDOWS, SYS_PLATFORM
@@ -214,7 +207,7 @@ def test_peercreds_unix_sock(peercreds_enabled_server):
     httpserver = peercreds_enabled_server
     bind_addr = httpserver.bind_addr
 
-    if isinstance(bind_addr, six.binary_type):
+    if isinstance(bind_addr, bytes):
         bind_addr = bind_addr.decode()
 
     quoted = urllib.parse.quote(bind_addr, safe='')
@@ -246,7 +239,7 @@ def test_peercreds_unix_sock_with_lookup(peercreds_enabled_server):
 
     bind_addr = httpserver.bind_addr
 
-    if isinstance(bind_addr, six.binary_type):
+    if isinstance(bind_addr, bytes):
         bind_addr = bind_addr.decode()
 
     quoted = urllib.parse.quote(bind_addr, safe='')
