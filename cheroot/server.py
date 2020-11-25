@@ -1393,7 +1393,7 @@ class HTTPConnection:
             https://github.com/daveti/tcpSockHack
             msdn.microsoft.com/en-us/commandline/wsl/release_notes#build-15025
             """
-            raise RuntimeError() from socket_err
+            raise RuntimeError from socket_err
         else:
             pid, uid, gid = struct.unpack(PEERCRED_STRUCT_DEF, peer_creds)
             return pid, uid, gid
