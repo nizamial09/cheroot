@@ -5,13 +5,23 @@
   by the
   `maint/8.x branch <https://github.com/cherrypy/cheroot/tree/maint/8.x>`_
   and stabilizing bugfixes will be accepted to that branch.
+.. scm-version-title:: v8.5.0
+
+- :issue:`305` via :pr:`311`: In
+  :py:class:`~cheroot.connections.ConnectionManager`,
+  process connections as they become active rather than
+  waiting for a ``tick`` event, addressing performance
+  degradation introduced in v8.1.0.
+
+- :issue:`341` via :pr:`342`: Suppress legitimate OS errors
+  expected on shutdown.
 
 .. scm-version-title:: v8.4.8
 
 - :issue:`317` via :pr:`337`: Fixed a regression in
   8.4.5 where the connections dictionary would change
-  size during iteration, leading to a RuntimeError raised
-  in the logs -- by :user:`liamstask`.
+  size during iteration, leading to a :py:exc:`RuntimeError`
+  raised in the logs -- by :user:`liamstask`.
 
 .. scm-version-title:: v8.4.7
 

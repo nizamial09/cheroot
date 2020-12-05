@@ -5,6 +5,7 @@ import os
 import socket
 import tempfile
 import threading
+import time
 import uuid
 import urllib.parse
 
@@ -118,20 +119,20 @@ def test_serving_is_false_and_stop_returns_after_ctrlc():
 
     httpserver.prepare()
 
-    # Simulate a Ctrl-C on the first call to `get_conn`.
+    # Simulate a Ctrl-C on the first call to `run`.
     def raise_keyboard_interrupt(*args):
         raise KeyboardInterrupt()
 
-    httpserver._connections.get_conn = raise_keyboard_interrupt
+    httpserver._connections.run = raise_keyboard_interrupt
 
     serve_thread = threading.Thread(target=httpserver.serve)
     serve_thread.start()
 
     # The thread should exit right away due to the interrupt.
-    serve_thread.join(0.5)
+    serve_thread.join(httpserver.expiration_interval * 2)
     assert not serve_thread.is_alive()
 
-    assert not httpserver.serving
+    assert not httpserver._connections._serving
     httpserver.stop()
 
 
@@ -288,11 +289,12 @@ def test_high_number_of_file_descriptors(resource_limit):
     httpserver = HTTPServer(
         bind_addr=(ANY_INTERFACE_IPV4, EPHEMERAL_PORT), gateway=Gateway,
     )
-    httpserver.prepare()
 
     try:
         # This will trigger a crash if select() is used in the implementation
-        httpserver.tick()
+        with httpserver._run_in_thread():
+            # allow server to run long enough to invoke select()
+            time.sleep(1.0)
     except:  # noqa: E722
         raise  # only needed for `else` to work
     else:
@@ -348,11 +350,15 @@ def many_open_sockets(resource_limit):
         for i in range(resource_limit):
             sock = socket.socket()
             test_sockets.append(sock)
-            # If we reach a high enough number, we don't need to open more
-            if sock.fileno() >= resource_limit:
-                break
+            # NOTE: We used to interrupt the loop early but this doesn't seem
+            # NOTE: to work well in envs with indeterministic runtimes like
+            # NOTE: PyPy. It looks like sometimes it frees some file
+            # NOTE: descriptors in between running this fixture and the actual
+            # NOTE: test code so the early break has been removed to try
+            # NOTE: address that. The approach may need to be rethought if the
+            # NOTE: issue reoccurs. Another approach may be disabling the GC.
         # Check we opened enough descriptors to reach a high number
-        the_highest_fileno = test_sockets[-1].fileno()
+        the_highest_fileno = max(sock.fileno() for sock in test_sockets)
         assert the_highest_fileno >= resource_limit
         yield the_highest_fileno
     finally:

@@ -1,6 +1,7 @@
 # pylint: disable=unused-import
 """Compatibility code for using Cheroot with various versions of Python."""
 
+import os
 import platform
 
 
@@ -10,6 +11,10 @@ try:
     del ssl
 except ImportError:
     IS_ABOVE_OPENSSL10 = None
+
+IS_CI = bool(os.getenv('CI'))
+IS_GITHUB_ACTIONS_WORKFLOW = bool(os.getenv('GITHUB_WORKFLOW'))
+
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 SYS_PLATFORM = platform.system()

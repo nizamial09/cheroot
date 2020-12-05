@@ -12,7 +12,7 @@ import pytest
 from jaraco.text import trim, unwrap
 
 from cheroot.test import helper, webtest
-from cheroot._compat import IS_PYPY
+from cheroot._compat import IS_CI, IS_PYPY
 import cheroot.server
 
 
@@ -394,8 +394,9 @@ def test_streaming_10(test_client, set_cl):
         pytest.param(
             'HTTP/1.1',
             marks=pytest.mark.xfail(
-                IS_PYPY,
-                reason='Fails under PyPy for unknown reason',
+                IS_PYPY and IS_CI,
+                reason='Fails under PyPy in CI for unknown reason',
+                strict=False,
             ),
         ),
     ),
@@ -1138,6 +1139,6 @@ def test_invalid_selected_connection(test_client, monkeypatch):
     # trigger the internal errors
     faux_get_map.sabotage_conn = faux_select.request_served = True
     # give time to make sure the error gets handled
-    time.sleep(0.2)
+    time.sleep(test_client.server_instance.expiration_interval * 2)
     assert faux_select.os_error_triggered
     assert faux_get_map.conn_closed
