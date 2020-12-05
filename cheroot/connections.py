@@ -261,8 +261,7 @@ class ConnectionManager:
                         msg,
                     ]
 
-                    sock_to_make = s
-                    wfile = mf(sock_to_make, 'wb', io.DEFAULT_BUFFER_SIZE)
+                    wfile = mf(s, 'wb', io.DEFAULT_BUFFER_SIZE)
                     try:
                         wfile.write(''.join(buf).encode('ISO-8859-1'))
                     except socket.error as ex:
